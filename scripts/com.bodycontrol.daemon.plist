@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.bodycontrol.daemon</string>
+    <key>ProgramArguments</key>
+    <array>
+        <!-- caffeinate -s: the Mac does not sleep while the daemon runs and is on AC power -->
+        <string>/usr/bin/caffeinate</string>
+        <string>-s</string>
+        <string>__HOME__/.local/bin/bodycontrol</string>
+        <string>daemon</string>
+        <string>--address</string>
+        <string>__ADDRESS__</string>
+    </array>
+    <key>WorkingDirectory</key><string>__APP__</string>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>ThrottleInterval</key><integer>30</integer>
+    <key>StandardOutPath</key><string>__HOME__/Library/Logs/bodycontrol-daemon.log</string>
+    <key>StandardErrorPath</key><string>__HOME__/Library/Logs/bodycontrol-daemon.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key><string>__HOME__/.local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+        <key>PYTHONUNBUFFERED</key><string>1</string>
+    </dict>
+</dict>
+</plist>
