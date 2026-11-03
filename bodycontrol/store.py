@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import time
 
@@ -112,6 +113,7 @@ def now_ms() -> int:
 
 class Store:
     def __init__(self, path: str) -> None:
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         # timeout: the daemon and the hourly archive job share this file.
         self.conn = sqlite3.connect(path, timeout=30)
         self.conn.execute("PRAGMA journal_mode=WAL")

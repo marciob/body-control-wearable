@@ -1,4 +1,4 @@
-"""Command-line entry point: `bodycontrol scan` and `bodycontrol live`."""
+"""Command-line entry point for all `bodycontrol` commands."""
 
 from __future__ import annotations
 
@@ -15,6 +15,10 @@ from .ble import find_whoop, scan
 from .hrm import parse_heart_rate
 from .hrv import RollingHRV
 from .store import Store, now_ms
+
+
+# Every command reads and writes this file unless --db says otherwise.
+DEFAULT_DB = os.path.expanduser("~/Library/Application Support/bodycontrol/bodycontrol.sqlite")
 
 
 def _log(msg: str) -> None:
@@ -176,39 +180,27 @@ async def cmd_enable(args: argparse.Namespace) -> int:
 
 
 async def cmd_imu(args: argparse.Namespace) -> int:
-    import os
-
     from .imu import run_imu
 
-    db = args.db or os.path.expanduser("~/Library/Application Support/bodycontrol/bodycontrol.sqlite")
-    return await run_imu(db, args.address, args.minutes, stop_only=args.stop)
+    return await run_imu(args.db, args.address, args.minutes, stop_only=args.stop)
 
 
 async def cmd_daemon(args: argparse.Namespace) -> int:
-    import os
-
     from .daemon import run_daemon
 
-    db = args.db or os.path.expanduser("~/Library/Application Support/bodycontrol/bodycontrol.sqlite")
-    return await run_daemon(db, args.address, args.drain_every, args.battery_every, imu=args.imu)
+    return await run_daemon(args.db, args.address, args.drain_every, args.battery_every, imu=args.imu)
 
 
 async def cmd_night(args: argparse.Namespace) -> int:
-    import os
-
     from .night import run_night
 
-    db = args.db or os.path.expanduser("~/Library/Application Support/bodycontrol/bodycontrol.sqlite")
-    return run_night(db, args.days, args.json)
+    return run_night(args.db, args.days, args.json)
 
 
 async def cmd_zones(args: argparse.Namespace) -> int:
-    import os
-
     from .zones import run_zones
 
-    db = args.db or os.path.expanduser("~/Library/Application Support/bodycontrol/bodycontrol.sqlite")
-    return run_zones(db, args.max_hr, args.days, args.json)
+    return run_zones(args.db, args.max_hr, args.days, args.json)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -222,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
 
     l = sub.add_parser("live", help="stream heart rate + R-R, print HRV, save to SQLite")
     l.add_argument("--address", help="device address/UUID from `scan`")
-    l.add_argument("--db", default="bodycontrol.sqlite")
+    l.add_argument("--db", default=DEFAULT_DB)
     l.add_argument("--minutes", type=float, default=0, help="stop after N minutes (0 = until Ctrl-C)")
     l.add_argument("--window", type=float, default=60.0, help="HRV window in seconds")
     l.add_argument("--timeout", type=float, default=10.0, help="scan timeout per attempt")
@@ -235,21 +227,21 @@ def main(argv: list[str] | None = None) -> int:
 
     sy = sub.add_parser("sync", help="offload the strap's history (acked chunks are trimmed from the strap)")
     sy.add_argument("--address")
-    sy.add_argument("--db", default="bodycontrol.sqlite")
+    sy.add_argument("--db", default=DEFAULT_DB)
     sy.add_argument("--idle", type=float, default=30.0)
     sy.add_argument("--max-minutes", type=float, default=30.0)
     sy.add_argument("--no-deep", action="store_true", help="do not write the R22 deep-stream flags before the drain")
     sy.set_defaults(fn=cmd_sync)
 
-    pu = sub.add_parser("push", help="copy new local rows to the VPS over SSH")
-    pu.add_argument("--db", default="bodycontrol.sqlite")
+    pu = sub.add_parser("push", help="copy new local rows to your server over SSH")
+    pu.add_argument("--db", default=DEFAULT_DB)
     pu.add_argument("--host", default=os.environ.get("BODYCONTROL_PUSH_HOST"), help="SSH target, e.g. user@server (env BODYCONTROL_PUSH_HOST)")
     pu.add_argument("--remote-dir", default=os.environ.get("BODYCONTROL_REMOTE_DIR", "body-control"), help="checkout of this repo on the server (env BODYCONTROL_REMOTE_DIR)")
     pu.add_argument("--origin", default="mac")
     pu.set_defaults(fn=cmd_push)
 
     ar = sub.add_parser("archive", help="upload new raw frames to S3 (compressed), prune old local copies")
-    ar.add_argument("--db", default="bodycontrol.sqlite")
+    ar.add_argument("--db", default=DEFAULT_DB)
     ar.add_argument("--origin", default="mac")
     ar.add_argument("--bucket", default=None)
     ar.add_argument("--profile", default=None)
@@ -262,14 +254,14 @@ def main(argv: list[str] | None = None) -> int:
 
     im = sub.add_parser("imu", help="live 100 Hz six-axis IMU capture for a bounded session")
     im.add_argument("--address")
-    im.add_argument("--db", default=None, help="default: the hourly job's database")
+    im.add_argument("--db", default=DEFAULT_DB)
     im.add_argument("--minutes", type=float, default=5.0)
     im.add_argument("--stop", action="store_true", help="only send the stop commands")
     im.set_defaults(fn=cmd_imu)
 
     dm = sub.add_parser("daemon", help="stay connected: history drain every 15 min + battery log")
     dm.add_argument("--address")
-    dm.add_argument("--db", default=None, help="default: the hourly job's database")
+    dm.add_argument("--db", default=DEFAULT_DB)
     dm.add_argument("--drain-every", type=float, default=15.0, help="minutes between history drains (default 15)")
     dm.add_argument("--battery-every", type=float, default=15.0, help="minutes between battery reads")
     dm.add_argument("--imu", action="store_true",
@@ -277,14 +269,14 @@ def main(argv: list[str] | None = None) -> int:
     dm.set_defaults(fn=cmd_daemon)
 
     ni = sub.add_parser("night", help="one line per night: sleep window, RHR (median HR) and HRV (RMSSD)")
-    ni.add_argument("--db", help="default: the daemon's database")
+    ni.add_argument("--db", default=DEFAULT_DB)
     ni.add_argument("--days", type=int, default=30, help="look back this many days (default 30)")
     ni.add_argument("--json", action="store_true", help="one JSON object per night")
     ni.set_defaults(fn=cmd_night)
 
     zo = sub.add_parser("zones", help="minutes per heart-rate zone per day (WHOOP zones, as a share of max HR)")
     zo.add_argument("--max-hr", type=int, required=True, help="your maximum heart rate, bpm (WHOOP default: 220 - age)")
-    zo.add_argument("--db", help="default: the daemon's database")
+    zo.add_argument("--db", default=DEFAULT_DB)
     zo.add_argument("--days", type=int, default=14, help="whole local days to show, today included (default 14)")
     zo.add_argument("--json", action="store_true", help="one JSON object per day")
     zo.set_defaults(fn=cmd_zones)

@@ -14,6 +14,11 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key><string>__HOME__/.local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+        <!-- launchd does not read your shell profile. install-autosync.sh copies these values. -->
+        <key>BODYCONTROL_PUSH_HOST</key><string>__PUSH_HOST__</string>
+        <key>BODYCONTROL_REMOTE_DIR</key><string>__REMOTE_DIR__</string>
+        <key>BODYCONTROL_BUCKET</key><string>__BUCKET__</string>
+        <key>BODYCONTROL_AWS_PROFILE</key><string>__AWS_PROFILE__</string>
     </dict>
 </dict>
 </plist>

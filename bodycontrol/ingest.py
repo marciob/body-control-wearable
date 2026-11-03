@@ -1,4 +1,4 @@
-"""VPS side: read JSON lines from stdin, store them in data/bodycontrol.sqlite.
+"""Server side: read JSON lines from stdin, store them in data/bodycontrol.sqlite.
 
 Stdlib only. Every table gets (origin, local_id) as its unique key.
 """

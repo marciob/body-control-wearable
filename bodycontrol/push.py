@@ -1,7 +1,7 @@
-"""Copy new rows from the local SQLite to the VPS over SSH.
+"""Copy new rows from the local SQLite to your server over SSH.
 
-Each row is sent as one JSON line to `python3 -m bodycontrol.ingest` on the VPS.
-The VPS inserts with INSERT OR IGNORE on (origin, table, local id), so a resend is harmless.
+Each row is sent as one JSON line to `python3 -m bodycontrol.ingest` on the server.
+The server inserts with INSERT OR IGNORE on (origin, table, local id), so a resend is harmless.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import sqlite3
 import subprocess
 import time
 
-# Decoded tables only. Raw frames go to S3 (see archive.py), never to the VPS disk.
+# Decoded tables only. Raw frames go to S3 (see archive.py), never to the server.
 # raw_frame / hist_record are the v1 tables; kept so old local files still push.
 TABLES = ("session", "hr_sample", "rr_interval", "battery", "hist18", "hist_count", "hist_record")
 
@@ -47,5 +47,5 @@ def run_push(db: str, host: str, remote_dir: str, origin: str) -> int:
     with conn:
         for t, m in maxes.items():
             conn.execute("INSERT OR REPLACE INTO push_cursor(tbl, last_rowid) VALUES (?, ?)", (t, m))
-    print(f"pushed {len(lines)} rows in {time.time() - t0:.1f}s. VPS: {res.stdout.strip()}")
+    print(f"pushed {len(lines)} rows in {time.time() - t0:.1f}s. server: {res.stdout.strip()}")
     return 0

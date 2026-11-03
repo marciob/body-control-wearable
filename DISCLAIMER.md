@@ -10,7 +10,7 @@ logo or other brand asset.
 ## Purpose: interoperability with your own device
 
 The purpose of this project is to let the owner of a strap read the data of that strap, on
-their own computer, in an open format. It is not made to compete with, replace, or harm the
+their own computer, in an open format (SQLite). It is not made to compete with, replace, or harm the
 products or services of WHOOP.
 
 The project needs your own physical strap. It does not get access to any WHOOP account, cloud
@@ -18,8 +18,7 @@ service or subscription feature. It does not remove or go around any paywall or 
 
 ## No proprietary material
 
-This repository contains only code that its author wrote and factual notes about the Bluetooth
-protocol. The protocol facts come from two sources:
+This repository contains only original code and factual notes about the Bluetooth protocol. The protocol facts come from two sources:
 
 1. Public community projects. The README lists them under "Sources".
 2. Bluetooth traffic between the author's own strap and this tool.
@@ -44,12 +43,13 @@ you have a health concern, speak to a health professional.
 
 ## Risks to your strap and your data
 
-- The strap holds one Bluetooth bond at a time. When this tool bonds, the WHOOP app loses its
-  bond and must pair again.
-- The history offload acknowledges each chunk. The strap then deletes that chunk. Data that this
-  tool pulls does not go to the WHOOP app or the WHOOP cloud. Keep your own copy.
-- `enable-deep` writes persistent feature flags to the strap. They change which data the strap
-  sends. The full effect of each flag is not known.
+- The strap holds one Bluetooth bond at a time. When this tool makes a bond, the WHOOP app loses
+  its bond. To use the WHOOP app again, pair it again.
+- During a history download, the tool confirms each part. The strap then deletes that part.
+  Data that this tool downloads does not go to the WHOOP app or the WHOOP cloud. Keep your own
+  copy.
+- `enable-deep` and `sync` write persistent feature flags to the strap. They change which data
+  the strap records. The full effect of each flag is not known.
 - The protocol is undocumented. A firmware update can change it and stop this tool.
 
 ## No warranty
